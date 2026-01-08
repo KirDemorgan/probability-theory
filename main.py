@@ -107,7 +107,7 @@ logger.info(f"2. Число элементов < медианы (n2) = {n2}")
 logger.info(f"3. Количество серий (KS) = {ks}")
 logger.info(f"4. M[KS] = (2*n1*n2)/(n1+n2) + 1 = {mean_ks:.4f}")
 logger.info(f"5. σ[KS] = √[ (2n1n2(2n1n2-n1-n2)) / ((n1+n2)^2 * (n1+n2-1)) ] = {std_ks:.4f}")
-logger.info(f"6. Z_выч = (KS - E[KS] ± 0.5) / σ[KS] = {z_calc_series:.4f}")
+logger.info(f"6. Z_выч = (KS - M[KS] ± 0.5) / σ[KS] = {z_calc_series:.4f}")
 logger.info(f"7. Критическое Z_крит (α=0.05) = 1.96")
 logger.info(
     f"ВЫВОД: {'Случайна' if abs(z_calc_series) < 1.96 else 'Не случайна'} (т.к. |Z| {'<' if abs(z_calc_series) < 1.96 else '>'} 1.96)")
@@ -164,7 +164,7 @@ logger.info(f"1. Выборка разделена на две части: n1 = 
 logger.info(f"2. Статистика U (число инверсий) = {u_stat}")
 logger.info(f"3. M[U] = (n1*n2)/2 = {e_u:.2f}")
 logger.info(f"4. σ[U] = √[ (n1*n2*(n1+n2+1))/12 ] = {s_u:.4f}")
-logger.info(f"5. Z_выч = (U - E[U]) / σ[U] = {z_mw:.4f}")
+logger.info(f"5. Z_выч = (U - M[U]) / σ[U] = {z_mw:.4f}")
 logger.info(f"6. Критическое Z_крит (α=0.01, двустороннее) = 2.57")
 logger.info(
     f"ВЫВОД: {'Однородны' if abs(z_mw) < 2.57 else 'Неоднородны'} (т.к. |Z| {'<' if abs(z_mw) < 2.57 else '>'} 2.57)")
