@@ -2,6 +2,8 @@ import sys
 import math
 import logging
 import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
 
 logging.basicConfig(
     level=logging.INFO,
@@ -36,21 +38,21 @@ logger.info(f"Loaded {n} records from `data/data.xls` (sheet {sheet_index + 1}, 
 
 # --- 7. Первичный анализ ---
 mean_x = sum(data) / n
-mean_x2 = sum(x**2 for x in data) / n
-var_x = mean_x2 - (mean_x**2)
+mean_x2 = sum(x ** 2 for x in data) / n
+var_x = mean_x2 - (mean_x ** 2)
 std_x = math.sqrt(var_x)
 
 sorted_data = sorted(data)
 
 if n % 2 == 1:
-    median = sorted_data[n//2]
+    median = sorted_data[n // 2]
 else:
-    median = (sorted_data[n//2 - 1] + sorted_data[n//2]) / 2
+    median = (sorted_data[n // 2 - 1] + sorted_data[n // 2]) / 2
 
-m3 = sum((x - mean_x)**3 for x in data) / n
-m4 = sum((x - mean_x)**4 for x in data) / n
-As = m3 / (std_x**3) if std_x != 0 else float('nan')
-Ex = (m4 / (std_x**4) - 3) if std_x != 0 else float('nan')
+m3 = sum((x - mean_x) ** 3 for x in data) / n
+m4 = sum((x - mean_x) ** 4 for x in data) / n
+As = m3 / (std_x ** 3) if std_x != 0 else float('nan')
+Ex = (m4 / (std_x ** 4) - 3) if std_x != 0 else float('nan')
 
 logger.info("\n--- 7. Характеристики ---")
 logger.info(f"Среднее: {mean_x:.4f}")
@@ -59,6 +61,33 @@ logger.info(f"Медиана: {median:.4f}")
 logger.info(f"Асимметрия: {As:.4f}")
 logger.info(f"Эксцесс: {Ex:.4f}")
 logger.info(f"Максимум (ОМП для F4): {max(data)}")
+
+theta = max(data)
+k_sturges = int(math.log2(n)) + 1
+step = theta / k_sturges
+
+try:
+    logger.info("Building histogram and density plot")
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    ax.hist(data, bins=k_sturges, density=True, edgecolor='black', color='skyblue', alpha=0.7,
+            label='Гистограмма (плотность)')
+
+    x_vals = np.linspace(0, theta, 500)
+    f_x = (2 * x_vals) / (theta ** 2)
+
+    ax.plot(x_vals, f_x, 'r-', lw=3, label=fr'Плотность F4 ($\hat{{\theta}}={theta:.4f}$)')
+
+    ax.set_xlabel('Показатель X')
+    ax.set_ylabel('Плотность вероятности')
+    ax.set_title('Гистограмма и теоретическая плотность распределения $F_4$')
+    ax.legend()
+    ax.grid(True, alpha=0.3)
+
+    fig.savefig('histogram.png', dpi=150, bbox_inches='tight')
+    plt.close(fig)
+except Exception:
+    logger.exception("Failed to build plot")
 
 # --- 8. Критерий серий (случайность) ---
 signs = []
@@ -72,12 +101,12 @@ n1 = signs.count('+')
 n2 = signs.count('-')
 ks = 1
 for i in range(1, len(signs)):
-    if signs[i] != signs[i-1]:
+    if signs[i] != signs[i - 1]:
         ks += 1
 
 try:
-    denom = math.sqrt((2*n1*n2*(2*n1*n2 - n1 - n2))/((n1+n2)**2 * (n1+n2-1)))
-    z_calc_series = ((ks - (2*n1*n2)/(n1+n2) - 1) - 0.5) / denom
+    denom = math.sqrt((2 * n1 * n2 * (2 * n1 * n2 - n1 - n2)) / ((n1 + n2) ** 2 * (n1 + n2 - 1)))
+    z_calc_series = ((ks - (2 * n1 * n2) / (n1 + n2) - 1) - 0.5) / denom
 except Exception:
     logger.exception("Error computing series test statistic (possible division by zero).")
     raise
@@ -100,17 +129,17 @@ for i in range(k):
         ni_obs = len([x for x in data if left <= x < right])
     else:
         ni_obs = len([x for x in data if left <= x <= right])
-    pi = (right**2 - left**2) / (theta**2) if theta != 0 else 0
+    pi = (right ** 2 - left ** 2) / (theta ** 2) if theta != 0 else 0
     ni_theor = n * pi
     if ni_theor > 0:
-        chi_sq += ((ni_obs - ni_theor)**2) / ni_theor
-    logger.info(f"Интервал {i+1} [{left:.2f}-{right:.2f}]: n_выб={ni_obs}, n_теор={ni_theor:.2f}")
+        chi_sq += ((ni_obs - ni_theor) ** 2) / ni_theor
+    logger.info(f"Интервал {i + 1} [{left:.2f}-{right:.2f}]: n_выб={ni_obs}, n_теор={ni_theor:.2f}")
 
 logger.info(f"Хи-квадрат выч: {chi_sq:.4f}")
 
 # --- 12. Манн-Уитни (однородность половин) ---
-group1 = data[:n//2]
-group2 = data[n//2:]
+group1 = data[:n // 2]
+group2 = data[n // 2:]
 n_mw = len(group1)
 
 u_stat = 0
@@ -122,7 +151,7 @@ for x in group1:
             u_stat += 0.5
 
 try:
-    z_mw = (u_stat - (n_mw**2)/2) / math.sqrt((n_mw**2 * (2*n_mw + 1))/12)
+    z_mw = (u_stat - (n_mw ** 2) / 2) / math.sqrt((n_mw ** 2 * (2 * n_mw + 1)) / 12)
 except Exception:
     logger.exception("Error computing Mann-Whitney Z (possible division by zero).")
     raise
